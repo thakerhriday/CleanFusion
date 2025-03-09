@@ -1,19 +1,12 @@
 import pandas as pd
 from decision_engine.decision_engine import DecisionEngine
-from utils.logger import Logger
+from utils.logger import setup_logger
 
-if __name__ == "__main__":
-    logger = Logger()
-    
-    try:
-        sample_data = pd.read_csv('sample_data.csv')
-        logger.info("Sample data loaded successfully.")
-        
-        engine = DecisionEngine(sample_data)
-        cleaned_data = engine.run_pipeline()
-        
-        logger.info("Pipeline executed successfully. Cleaned data saved as **cleaned_data.csv**.")
-        print("Pipeline executed successfully. Check 'cleaned_data.csv' for results.")
-        
-    except Exception as e:
-        logger.error(f"Pipeline execution failed: {e}")
+logger = setup_logger()
+
+try:
+    engine = DecisionEngine(data_path="sample_data.csv")
+    cleaned_data = engine.run_pipeline()
+    logger.info("Pipeline executed successfully.")
+except Exception as e:
+    logger.error(f"Pipeline execution failed: {e}")

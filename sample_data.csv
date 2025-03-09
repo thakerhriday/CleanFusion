@@ -1,11 +1,11 @@
-User ID,Gender,Age,EstimatedSalary,Purchased,Review
-15566689,Male,25,50000,0,"The product was amazing"
-15566690,Female,30,60000,1,
-15566691,Male,,70000,0,"Decent quality but overpriced"
-15566692,,35,75000,1,"Highly recommend!"
-15566693,Female,40,80000,0,
-15566694,Male,20,,1,"Awful experience, never buying again"
-15566695,Female,28,55000,0,"Love it! Best purchase ever"
-15566696,Male,42,67000,1,
-15566697,,50,120000,1,"Good value for money"
-15566698,Female,38,89000,0,
+ID,Age,Salary,Location,Purchased
+101,25,40000,Mumbai,Yes
+102,30,50000,Delhi,No
+103,22,45000,Bangalore,Yes
+104,28,60000,Chennai,No
+105,35,75000,Hyderabad,Yes
+106,40,90000,Pune,Yes
+107,23,38000,Kolkata,No
+108,31,58000,Jaipur,Yes
+109,27,48000,Ahmedabad,No
+110,33,72000,Surat,Yes

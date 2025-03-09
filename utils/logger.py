@@ -2,47 +2,28 @@ import logging
 import os
 from datetime import datetime
 
-class Logger:
-    def __init__(self, log_dir='logs'):
-        os.makedirs(log_dir, exist_ok=True)
-        log_file = os.path.join(log_dir, f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+def setup_logger():
+    log_directory = "logs"
+    os.makedirs(log_directory, exist_ok=True)
+    
+    log_file = os.path.join(log_directory, f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
 
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(asctime)s [%(levelname)s] %(message)s',
-            handlers=[
-                logging.FileHandler(log_file, mode='w', encoding='utf-8'),  # <-- Add `encoding='utf-8'` here
-                logging.StreamHandler()
-            ]
-        )
-        self.logger = logging.getLogger(__name__)
+    logger = logging.getLogger("CleanFusionLogger")
+    logger.setLevel(logging.DEBUG)
 
-    def debug(self, message):
-        self.logger.debug(message)
-        for handler in self.logger.handlers:
-         handler.flush()  # <-- Forces the log entry to be written immediately
+    file_handler = logging.FileHandler(log_file)
+    console_handler = logging.StreamHandler()
 
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-    def info(self, message):
-        self.logger.info(message)
-        for handler in self.logger.handlers:
-            handler.flush()  # <-- Forces the log entry to be written immediately
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
 
+    if not logger.hasHandlers():
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
-    def warning(self, message):
-        self.logger.warning(message)
-        for handler in self.logger.handlers:
-            handler.flush()  # <-- Forces the log entry to be written immediately
-
-
-    def error(self, message):
-        self.logger.error(message, exc_info=True)
-        for handler in self.logger.handlers:
-            handler.flush()  # <-- Forces the log entry to be written immediately
-
-
-    def critical(self, message):
-        self.logger.critical(message)
-        for handler in self.logger.handlers:
-            handler.flush()  # <-- Forces the log entry to be written immediately
-
+    return logger

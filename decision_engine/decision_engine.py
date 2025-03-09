@@ -1,15 +1,14 @@
 import pandas as pd
-import numpy as np
-from utils.logger import Logger
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from category_encoders import TargetEncoder
-from sklearn.impute import SimpleImputer
-from transformers import pipeline
+import logging
+from utils.logger import setup_logger
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, mean_squared_error
 
 class DecisionEngine:
     def __init__(self, data_path):
-        self.data_path = 'sample_data.csv' 
-        self.logger = Logger()
+        self.data_path = data_path
+        self.logger = setup_logger()
 
     def load_data(self):
         try:
@@ -20,56 +19,46 @@ class DecisionEngine:
             self.logger.error(f"Error loading data: {e}")
             raise e
 
-    def handle_categorical_data(self, data):
-        cat_columns = data.select_dtypes(include='object').columns.tolist()
-        if not cat_columns:
-            self.logger.info("No categorical columns detected.")
-            return data
-        
-        self.logger.info(f"Detected categorical columns: {cat_columns}")
+    def identify_target_column(self, data):
+        assumed_target = data.columns[-1]
+        self.logger.info(f"Assuming '{assumed_target}' as target column.")
 
-        for column in cat_columns:
-            unique_count = data[column].nunique()
+        if data[assumed_target].nunique() == 2 or data[assumed_target].nunique() > 10:
+            self.logger.info(f"Confirmed '{assumed_target}' as target based on data characteristics.")
+            return assumed_target
 
-            # Missing Value Handling
-            missing_ratio = data[column].isnull().mean()
-            if missing_ratio > 0:
-                if missing_ratio < 0.1:
-                    data[column].fillna(data[column].mode()[0], inplace=True)
-                    self.logger.info(f"{column} → Mode Imputation applied for missing values.")
-                else:
-                    data[column] = self.bert_based_imputation(data[column])
-                    self.logger.info(f"{column} → AI-based Imputation (BERT) applied for missing values.")
+        # AI-driven confirmation if assumption seems ambiguous
+        self.logger.warning("Target column assumption unclear. Using AI to confirm...")
 
-            # Encoding Strategies
-            if unique_count <= 10:
-                encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-                encoded_data = encoder.fit_transform(data[[column]])
-                encoded_df = pd.DataFrame(encoded_data, columns=encoder.get_feature_names_out())
-                data = pd.concat([data.drop(column, axis=1), encoded_df], axis=1)
-                self.logger.info(f"{column} → One-Hot Encoding applied.")
-            
-            elif 11 <= unique_count <= 50:
-                encoder = TargetEncoder()
-                data[column] = encoder.fit_transform(data[column], data['target'])
-                self.logger.info(f"{column} → Target Encoding applied.")
-            
-            else:
-                encoder = OrdinalEncoder()
-                data[column] = encoder.fit_transform(data[[column]])
-                self.logger.info(f"{column} → Ordinal Encoding applied for high cardinality data.")
-        
-        return data
+        potential_targets = [col for col in data.columns if data[col].nunique() < 20 and data[col].dtype in ['int64', 'float64']]
 
-    def bert_based_imputation(self, column):
-        nlp = pipeline('fill-mask', model='bert-base-uncased')
-        return column.apply(lambda x: x if pd.notna(x) else nlp(f"{x} [MASK]")[0]['token_str'])
+        if not potential_targets:
+            raise ValueError("No clear target column identified. Please specify the target manually.")
+
+        scores = {}
+        for col in potential_targets:
+            features = data.drop(columns=[col])
+            target = data[col]
+
+            # Split and train
+            X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.3, random_state=42)
+            model = RandomForestClassifier() if target.nunique() == 2 else RandomForestRegressor()
+            model.fit(X_train, y_train)
+
+            # Calculate performance
+            prediction = model.predict(X_test)
+            score = accuracy_score(y_test, prediction) if target.nunique() == 2 else -mean_squared_error(y_test, prediction)
+            scores[col] = score
+
+        best_target = max(scores, key=scores.get)
+        self.logger.info(f"AI-identified target column: '{best_target}'")
+        return best_target
 
     def run_pipeline(self):
         try:
             data = self.load_data()
-            data = self.handle_categorical_data(data)
-            self.logger.info("Categorical data handling completed successfully.")
+            target_column = self.identify_target_column(data)
+            self.logger.info(f"Target column finalized: {target_column}")
             return data
         except Exception as e:
             self.logger.error(f"Pipeline execution failed: {e}")

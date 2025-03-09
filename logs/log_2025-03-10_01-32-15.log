@@ -1,0 +1,5 @@
+2025-03-10 01:32:15 [INFO] Sample data loaded successfully.
+2025-03-10 01:32:15 [INFO] Assuming 'Purchased' as target column.
+2025-03-10 01:32:15 [INFO] Confirmed 'Purchased' as target based on data characteristics.
+2025-03-10 01:32:15 [INFO] Target column finalized: Purchased
+2025-03-10 01:32:15 [INFO] Pipeline executed successfully.
