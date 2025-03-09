@@ -4,43 +4,54 @@ from data_assessment.data_assessment import DataAssessment
 from data_cleaning.missing_value_handler import MissingValueHandler
 from data_cleaning.outlier_handler import OutlierHandler
 from text_vectorization.text_vectorizer import TextHandler
+from utils.logger import Logger  # New import
 
 class DecisionEngine:
     def __init__(self, file_path):
         self.file_path = file_path
         self.data = None
+        self.logger = Logger()  # Initialize logger
 
     def run_pipeline(self):
-        # Step 1: Data Assessment
-        assessor = DataAssessment(self.file_path)
-        assessor.load_data()
-        assessor.identify_data_types()
-        assessor.generate_profile_summary()
+        try:
+            self.logger.info("🚀 Pipeline started")
 
-        # Step 2: Missing Value Handling
-        cleaner = MissingValueHandler(assessor.data)
-        cleaned_data = cleaner.handle_missing_values()
+            # Step 1: Data Assessment
+            self.logger.info("🔍 Starting Data Assessment")
+            assessor = DataAssessment(self.file_path)
+            assessor.load_data()
+            assessor.identify_data_types()
+            assessor.generate_profile_summary()
 
-        # Step 3: Outlier Detection and Handling
-        outlier_handler = OutlierHandler(cleaned_data)
-        for column in cleaned_data.select_dtypes(include=[np.number]).columns:
-            outliers = outlier_handler.detect_outliers_iqr(column)
-            if not outliers.empty:
-                print(f"\n⚠️ Outliers detected in {column}. Applying IQR-based handling.")
-                outlier_handler.handle_outliers_iqr(column)
+            # Step 2: Missing Value Handling
+            self.logger.info("🧹 Handling Missing Values")
+            cleaner = MissingValueHandler(assessor.data)
+            cleaned_data = cleaner.handle_missing_values()
 
-        # Step 4: Text and Categorical Data Processing
-        text_handler = TextHandler(cleaned_data)
-        text_columns = text_handler.detect_text_columns()
-        categories, text_data = self.classify_columns(cleaned_data, text_columns)
+            # Step 3: Outlier Detection and Handling
+            self.logger.info("📈 Handling Outliers")
+            outlier_handler = OutlierHandler(cleaned_data)
+            for column in cleaned_data.select_dtypes(include=[np.number]).columns:
+                outliers = outlier_handler.detect_outliers_iqr(column)
+                if not outliers.empty:
+                    self.logger.warning(f"⚠️ Outliers detected in {column}")
+                    outlier_handler.handle_outliers_iqr(column)
 
-        text_handler.encode_categorical_columns(categories)
-        text_handler.vectorize_text_columns(text_data)
+            # Step 4: Text and Categorical Data Processing
+            self.logger.info("🔠 Handling Text and Categorical Data")
+            text_handler = TextHandler(cleaned_data)
+            text_columns = text_handler.detect_text_columns()
+            categories, text_data = self.classify_columns(cleaned_data, text_columns)
 
-        # Step 5: Save Processed Data
-        text_handler.save_processed_data("final_cleaned_data.csv")
+            text_handler.encode_categorical_columns(categories)
+            text_handler.vectorize_text_columns(text_data)
 
-        print("\n✅ Data Preprocessing Pipeline Completed Successfully!")
+            # Step 5: Save Processed Data
+            text_handler.save_processed_data("final_cleaned_data.csv")
+
+            self.logger.info("✅ Data Preprocessing Pipeline Completed Successfully!")
+        except Exception as e:
+            self.logger.error(f"❌ Error in pipeline: {str(e)}", exc_info=True)
 
     def classify_columns(self, data, text_columns):
         categories, text_data = [], []
@@ -55,8 +66,8 @@ class DecisionEngine:
             else:
                 text_data.append(column)
 
-        print(f"\n➡️ Categorical Columns: {categories}")
-        print(f"➡️ Text Columns for Vectorization: {text_data}")
+        self.logger.info(f"➡️ Categorical Columns: {categories}")
+        self.logger.info(f"➡️ Text Columns for Vectorization: {text_data}")
         return categories, text_data
 
     def calculate_entropy(self, series):
