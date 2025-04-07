@@ -1,0 +1,9 @@
+2025-04-07 11:21:31,115 [INFO] 🚀 Pipeline started
+2025-04-07 11:21:31,116 [INFO] 🔍 Starting Data Assessment
+2025-04-07 11:21:31,157 [INFO] 🧹 Handling Missing Values
+2025-04-07 11:21:31,163 [INFO] 📈 Handling Outliers
+2025-04-07 11:21:31,167 [INFO] 🔠 Handling Text and Categorical Data
+2025-04-07 11:21:31,169 [INFO] ➡️ Categorical Columns: ['Gender']
+2025-04-07 11:21:31,169 [INFO] ➡️ Text Columns for Vectorization: []
+2025-04-07 11:21:31,187 [INFO] ✅ Data Preprocessing Pipeline Completed Successfully!
+2025-04-07 11:21:31,187 [INFO] ✅ Process Completed Successfully
